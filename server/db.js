@@ -32,7 +32,6 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
-  CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 `);
 
 module.exports = db;

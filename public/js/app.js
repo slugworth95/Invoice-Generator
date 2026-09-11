@@ -475,7 +475,8 @@ function exportInvoiceCSV() {
 // ═══════════════════════════════════════════════
 function loadTrackerSettings() {
   $("ctUrl").value = localStorage.getItem("invoice-generator.ctUrl") || "http://localhost:3000";
-  $("ctToken").value = localStorage.getItem("invoice-generator.ctToken") || "";
+  // Auto-fill the token from the shared SSO cookie (current session first).
+  $("ctToken").value = getCookie("slugworth_token") || localStorage.getItem("invoice-generator.ctToken") || "";
 }
 
 async function fetchClientsFromTracker() {
