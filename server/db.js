@@ -32,6 +32,16 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
+
+  CREATE TABLE IF NOT EXISTS reminders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sent_at TEXT NOT NULL DEFAULT (datetime('now')),
+    note TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_reminders_invoice ON reminders(invoice_id);
 `);
 
 module.exports = db;

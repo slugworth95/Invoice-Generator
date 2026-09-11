@@ -78,6 +78,10 @@ const API = {
     return this.request(`/api/invoices${q ? `?${q}` : ""}`);
   },
 
+  listOverdueInvoices() {
+    return this.request("/api/invoices/overdue");
+  },
+
   getInvoice(id) {
     return this.request(`/api/invoices/${id}`);
   },
@@ -100,5 +104,55 @@ const API = {
 
   duplicateInvoice(id) {
     return this.request(`/api/invoices/${id}/duplicate`, { method: "POST" });
+  },
+
+  listReminders(id) {
+    return this.request(`/api/invoices/${id}/reminders`);
+  },
+
+  recordReminder(id, note) {
+    return this.request(`/api/invoices/${id}/reminders`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    });
+  },
+
+  // Server-side PDF generation. Returns the PDF as a Blob and triggers a download.
+  async downloadInvoicePdf(id, filename) {
+    const headers = this.token ? { Authorization: `Bearer ${this.token}` } : {};
+    const res = await fetch(`/api/invoices/${id}/pdf`, { headers });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new ApiError(res.status, (data && data.error) || `PDF download failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "invoice.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  // Generate a PDF from unsaved form state (POST /api/invoices/pdf).
+  async generateInvoicePdf(invoice, filename) {
+    const headers = { "Content-Type": "application/json" };
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    const res = await fetch("/api/invoices/pdf", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(invoice),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new ApiError(res.status, (data && data.error) || `PDF generation failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "invoice.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
   },
 };

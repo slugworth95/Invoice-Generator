@@ -11,6 +11,8 @@ Create, track, and send invoices. A full-stack app: vanilla JS frontend with liv
 - **Duplicate** — copy an existing invoice with a fresh number
 - **Live preview** — subtotal, discount, tax, and total computed automatically
 - **Print / Save as PDF** — print-optimized layout
+- **PDF download (server-side)** — real PDF files generated on the server with pdfkit (no browser print dialog)
+- **Payment reminders** — overdue invoice list, one-click reminder emails, and per-invoice reminder history
 - **Email to Client** — pre-filled email via mail client
 - **Export / Import** — JSON export/import (full backup/restore) + CSV export for spreadsheets
 - **Client Tracker integration** — fetch clients and auto-fill the bill-to section
@@ -34,9 +36,10 @@ Open http://localhost:3002. The SQLite database is created automatically in `dat
 Invoice-Generator/
 ├── server/
 │   ├── index.js          # Express app: static frontend + /api routes
-│   ├── db.js             # SQLite schema (users, sessions, invoices)
+│   ├── db.js             # SQLite schema (users, sessions, invoices, reminders)
 │   ├── auth.js           # register/login + bearer-token middleware
-│   └── routes/invoices.js # Invoice CRUD + duplicate + next-number
+│   ├── pdf.js            # Server-side PDF generation (pdfkit)
+│   └── routes/invoices.js # Invoice CRUD + duplicate + next-number + PDF + reminders
 ├── public/               # Frontend (served by Express)
 │   ├── index.html
 │   ├── css/styles.css
@@ -70,7 +73,12 @@ All endpoints below require `Authorization: Bearer <token>`.
 |---|---|---|
 | GET | `/api/invoices?search=&status=` | List invoices (newest first) |
 | GET | `/api/invoices/next-number` | Suggest the next invoice number |
+| GET | `/api/invoices/overdue` | Sent invoices past their due date, with `daysOverdue` |
+| POST | `/api/invoices/pdf` | Generate a PDF from submitted form state (no save required). Returns `application/pdf` |
 | GET | `/api/invoices/:id` | Get one invoice |
+| GET | `/api/invoices/:id/pdf` | Download a server-generated PDF for a saved invoice |
+| GET | `/api/invoices/:id/reminders` | Reminder history for one invoice |
+| POST | `/api/invoices/:id/reminders` | Record a reminder. Body: `{ note? }` |
 | POST | `/api/invoices` | Create. Body: `{ number?, clientName?, clientEmail?, clientCompany?, issueDate?, dueDate?, status?, taxRate?, discountPct?, notes?, lineItems?, clientId? }` |
 | PUT | `/api/invoices/:id` | Update (partial updates allowed) |
 | DELETE | `/api/invoices/:id` | Delete |
@@ -120,5 +128,5 @@ Totals are computed server-side from `lineItems`, `taxRate`, and `discountPct`.
 - [x] Server-side persistence with auth
 - [x] Client Tracker integration
 - [x] JSON export/import + CSV export
-- [ ] Payment reminders
-- [ ] PDF generation (server-side)
+- [x] Payment reminders
+- [x] PDF generation (server-side)

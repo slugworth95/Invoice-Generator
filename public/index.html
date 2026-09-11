@@ -139,8 +139,23 @@
             <textarea id="invoiceNotes" placeholder="Payment instructions, thank-you note, etc." oninput="markDirty(); updatePreview()"></textarea>
           </div>
         </div>
+        <!-- ─── Payment Reminders ─── -->
+        <div class="form-section">
+          <h3>⏰ Payment Reminders</h3>
+          <div class="reminder-box">
+            <div class="form-group">
+              <label>Reminder note (optional)</label>
+              <input type="text" id="reminderNote" placeholder="e.g. Second reminder — please pay by Friday">
+            </div>
+            <button type="button" class="btn-email" onclick="sendReminder()">✉️ Send Reminder</button>
+            <div id="reminderHistory" class="reminder-history"></div>
+          </div>
+          <h3 style="margin-top:1rem;">⏰ Overdue Invoices</h3>
+          <div id="overdueList" class="overdue-list"></div>
+        </div>
         <div class="actions">
-          <button class="btn-primary" onclick="printInvoice()">🖨️ Print / Save as PDF</button>
+          <button class="btn-primary" onclick="printInvoice()">🖨️ Print</button>
+          <button class="btn-primary" onclick="downloadPdf()">⬇️ Download PDF</button>
           <button class="btn-email" onclick="emailInvoice()">✉️ Email to Client</button>
           <button class="btn-secondary" onclick="duplicateInvoice()">📋 Duplicate</button>
           <button class="btn-secondary" onclick="exportInvoiceJSON()">📥 Download JSON</button>

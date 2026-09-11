@@ -150,3 +150,42 @@ header span { font-size: 0.85rem; opacity: 0.75; margin-left: auto; color: #555;
 .btn-secondary:hover { opacity: 0.9; }
 .btn-email { background: #2563eb; color: #fff; }
 .btn-email:hover { opacity: 0.9; }
+
+/* ─── Payment Reminders ─── */
+.reminder-box {
+  background: #f6f8fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}
+.reminder-box .btn-email { width: 100%; padding: 0.55rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.reminder-history { margin-top: 0.8rem; }
+.muted-note { font-size: 0.78rem; color: #888; font-style: italic; margin: 0.4rem 0; }
+.reminder-item {
+  display: flex; gap: 0.6rem; align-items: baseline;
+  font-size: 0.8rem; padding: 0.35rem 0;
+  border-bottom: 1px dashed #dde2e8;
+}
+.reminder-item:last-child { border-bottom: none; }
+.reminder-date { color: #064e3b; font-weight: 600; white-space: nowrap; }
+.reminder-note { color: #555; }
+.overdue-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.overdue-item {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 3px solid #ea580c;
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+}
+.overdue-info { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.overdue-days {
+  background: #ea580c; color: #fff; font-size: 0.68rem; font-weight: 700;
+  padding: 0.1rem 0.45rem; border-radius: 999px;
+}
+.overdue-meta { color: #777; margin: 0.2rem 0 0.4rem; }
+.overdue-actions { display: flex; align-items: center; gap: 0.5rem; }
+.overdue-total { font-weight: 700; color: #9a3412; margin-right: auto; }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; }
+.btn-sm:hover { opacity: 0.85; }

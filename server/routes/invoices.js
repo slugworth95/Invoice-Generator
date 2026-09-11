@@ -1,6 +1,7 @@
 // Invoice CRUD API.
 const express = require("express");
 const db = require("../db");
+const { buildInvoicePdf } = require("../pdf");
 
 const router = express.Router();
 
@@ -69,9 +70,56 @@ function nextNumber(userId) {
   return "INV-" + String(max + 1).padStart(4, "0");
 }
 
+function serializeReminder(row) {
+  return { id: row.id, invoiceId: row.invoice_id, sentAt: row.sent_at, note: row.note };
+}
+
 // GET /api/invoices/next-number — suggest the next invoice number
 router.get("/next-number", (req, res) => {
   res.json({ number: nextNumber(req.user.id) });
+});
+
+// GET /api/invoices/overdue — sent invoices past their due date
+router.get("/overdue", (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT *, CAST(julianday('now') - julianday(due_date) AS INTEGER) AS days_overdue
+       FROM invoices
+       WHERE user_id = ? AND status = 'sent' AND due_date IS NOT NULL AND due_date < date('now')
+       ORDER BY due_date ASC`
+    )
+    .all(req.user.id);
+  res.json(rows.map((row) => ({ ...serializeInvoice(row), daysOverdue: row.days_overdue })));
+});
+
+// POST /api/invoices/pdf — generate a PDF from submitted form state (no save required)
+router.post("/pdf", async (req, res) => {
+  const body = req.body || {};
+  const lineItems = parseLineItems(body.lineItems);
+  const invoice = {
+    number: body.number && String(body.number).trim() ? String(body.number).trim() : "INV-____",
+    clientName: body.clientName || null,
+    clientEmail: body.clientEmail || null,
+    clientCompany: body.clientCompany || null,
+    issueDate: body.issueDate || null,
+    dueDate: body.dueDate || null,
+    status: VALID_STATUSES.includes(body.status) ? body.status : "draft",
+    taxRate: Number(body.taxRate) || 0,
+    discountPct: Number(body.discountPct) || 0,
+    notes: body.notes || null,
+    lineItems,
+    ...computeTotals(lineItems, Number(body.taxRate) || 0, Number(body.discountPct) || 0),
+  };
+  try {
+    const pdf = await buildInvoicePdf(invoice);
+    const filename = (invoice.number || "invoice").replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf";
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdf);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate PDF" });
+  }
 });
 
 // GET /api/invoices?search=&status= — list
@@ -99,6 +147,51 @@ router.get("/:id", (req, res) => {
     .get(req.params.id, req.user.id);
   if (!row) return res.status(404).json({ error: "Invoice not found" });
   res.json(serializeInvoice(row));
+});
+
+// GET /api/invoices/:id/pdf — server-side PDF for a saved invoice
+router.get("/:id/pdf", async (req, res) => {
+  const row = db
+    .prepare("SELECT * FROM invoices WHERE id = ? AND user_id = ?")
+    .get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: "Invoice not found" });
+  try {
+    const pdf = await buildInvoicePdf(serializeInvoice(row));
+    const filename = (row.number || "invoice").replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf";
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdf);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate PDF" });
+  }
+});
+
+// GET /api/invoices/:id/reminders — reminder history for one invoice
+router.get("/:id/reminders", (req, res) => {
+  const inv = db
+    .prepare("SELECT id FROM invoices WHERE id = ? AND user_id = ?")
+    .get(req.params.id, req.user.id);
+  if (!inv) return res.status(404).json({ error: "Invoice not found" });
+  const rows = db
+    .prepare("SELECT * FROM reminders WHERE invoice_id = ? ORDER BY sent_at DESC, id DESC")
+    .all(inv.id);
+  res.json(rows.map(serializeReminder));
+});
+
+// POST /api/invoices/:id/reminders — record a payment reminder
+router.post("/:id/reminders", (req, res) => {
+  const inv = db
+    .prepare("SELECT id FROM invoices WHERE id = ? AND user_id = ?")
+    .get(req.params.id, req.user.id);
+  if (!inv) return res.status(404).json({ error: "Invoice not found" });
+  const note = (req.body || {}).note || null;
+  const result = db
+    .prepare("INSERT INTO reminders (invoice_id, user_id, note) VALUES (?, ?, ?)")
+    .run(inv.id, req.user.id, note);
+  res
+    .status(201)
+    .json(serializeReminder(db.prepare("SELECT * FROM reminders WHERE id = ?").get(Number(result.lastInsertRowid))));
 });
 
 // POST /api/invoices — create
@@ -179,6 +272,8 @@ router.delete("/:id", (req, res) => {
     .prepare("DELETE FROM invoices WHERE id = ? AND user_id = ?")
     .run(req.params.id, req.user.id);
   if (result.changes === 0) return res.status(404).json({ error: "Invoice not found" });
+  // foreign_keys is OFF in this DB, so clean up reminders manually
+  db.prepare("DELETE FROM reminders WHERE invoice_id = ?").run(req.params.id);
   res.status(204).end();
 });
 

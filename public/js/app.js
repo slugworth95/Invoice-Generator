@@ -266,6 +266,7 @@ async function saveCurrentInvoice() {
     isDirty = false;
     await rebuildSavedSelect();
     $("savedInvoicesSelect").value = currentSavedId;
+    await refreshReminderHistory(currentSavedId);
   } catch (err) {
     alert(err.message);
   }
@@ -280,6 +281,7 @@ async function loadSelectedInvoice() {
     const full = await API.getInvoice(id);
     applyFormState(full);
     currentSavedId = id;
+    await refreshReminderHistory(id);
     showStatus("Invoice loaded!", "ok");
   } catch (err) {
     alert(err.message);
@@ -297,6 +299,8 @@ async function deleteSelectedInvoice() {
       currentSavedId = null;
     }
     await rebuildSavedSelect();
+    await refreshReminderHistory(null);
+    await refreshOverdueList();
     showStatus("Invoice deleted.", "ok");
   } catch (err) {
     alert(err.message);
@@ -592,6 +596,154 @@ function emailInvoice() {
 }
 
 // ═══════════════════════════════════════════════
+// PDF DOWNLOAD (server-side)
+// ═══════════════════════════════════════════════
+async function downloadPdf() {
+  const state = gatherFormState();
+  const filename = "Invoice-" + (state.number || "invoice").replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf";
+  try {
+    await API.generateInvoicePdf(state, filename);
+    showStatus("PDF generated!", "ok");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// PAYMENT REMINDERS
+// ═══════════════════════════════════════════════
+function daysOverdue(dueDate) {
+  if (!dueDate) return 0;
+  const due = new Date(dueDate + "T00:00:00");
+  return Math.max(0, Math.floor((Date.now() - due.getTime()) / 86400000));
+}
+
+// Open a pre-filled reminder email and record the reminder.
+async function sendReminder(invoice) {
+  if (!invoice.clientEmail) {
+    alert('This invoice has no client email. Add one in the "Client Email" field first.');
+    return;
+  }
+  const note = $("reminderNote").value.trim();
+  const overdue = daysOverdue(invoice.dueDate);
+  const subject = encodeURIComponent("Payment reminder: " + invoice.number);
+  const body = encodeURIComponent(
+    "Hi " + (invoice.clientName || "there") + ",\n\n" +
+    "This is a friendly reminder that invoice " + invoice.number +
+    " for " + money(invoice.total) + " is " +
+    (overdue > 0 ? overdue + " day(s) past due" : "due") +
+    (invoice.dueDate ? " (due " + formatDate(invoice.dueDate) + ")." : ".") +
+    "\n\nPlease let us know if you have any questions, or if payment has already been sent.\n\n" +
+    "Thank you for your business!\n"
+  );
+  window.open("mailto:" + encodeURIComponent(invoice.clientEmail) + "?subject=" + subject + "&body=" + body, "_blank");
+  try {
+    await API.recordReminder(invoice.id, note || "Reminder email sent");
+    showStatus("Reminder recorded for " + invoice.number, "ok");
+    await refreshReminderHistory(invoice.id);
+    await refreshOverdueList();
+  } catch (err) {
+    alert("Reminder email opened, but could not be recorded: " + err.message);
+  }
+}
+
+// Send a reminder for the currently loaded invoice.
+async function sendReminder() {
+  if (!currentSavedId) {
+    showStatus("Save the invoice first, then send a reminder.", "warn");
+    return;
+  }
+  try {
+    const inv = await API.getInvoice(currentSavedId);
+    await sendReminder(inv);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// Send a reminder for an invoice from the overdue list.
+async function sendReminderFor(id) {
+  try {
+    const inv = await API.getInvoice(id);
+    await sendReminder(inv);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function refreshReminderHistory(invoiceId) {
+  const container = $("reminderHistory");
+  if (!container) return;
+  if (!invoiceId) {
+    container.innerHTML = '<p class="muted-note">Load or save an invoice to see its reminder history.</p>';
+    return;
+  }
+  try {
+    const reminders = await API.listReminders(invoiceId);
+    if (reminders.length === 0) {
+      container.innerHTML = '<p class="muted-note">No reminders sent for this invoice yet.</p>';
+      return;
+    }
+    container.innerHTML = reminders
+      .map((r) => {
+        const when = new Date(r.sentAt.replace(" ", "T") + "Z").toLocaleString("en-US", {
+          month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
+        });
+        return '<div class="reminder-item"><span class="reminder-date">' + when + "</span>" +
+          '<span class="reminder-note">' + escHtml(r.note || "") + "</span></div>";
+      })
+      .join("");
+  } catch {
+    container.innerHTML = '<p class="muted-note">Could not load reminder history.</p>';
+  }
+}
+
+async function refreshOverdueList() {
+  const container = $("overdueList");
+  if (!container) return;
+  try {
+    const overdue = await API.listOverdueInvoices();
+    if (overdue.length === 0) {
+      container.innerHTML = '<p class="muted-note">No overdue invoices. 🎉</p>';
+      return;
+    }
+    container.innerHTML = overdue
+      .map((inv) =>
+        '<div class="overdue-item">' +
+          '<div class="overdue-info"><strong>' + escHtml(inv.number) + "</strong> — " +
+            escHtml(inv.clientName || "No client") +
+            ' <span class="overdue-days">' + inv.daysOverdue + "d overdue</span></div>" +
+          '<div class="overdue-meta">Due ' + formatDate(inv.dueDate) + " · " +
+            escHtml(inv.clientEmail || "no email") + "</div>" +
+          '<div class="overdue-actions">' +
+            '<span class="overdue-total">' + money(inv.total) + "</span>" +
+            '<button class="btn-email btn-sm" onclick="sendReminderFor(' + inv.id + ')">✉️ Remind</button>' +
+            '<button class="btn-secondary btn-sm" onclick="loadInvoiceById(' + inv.id + ')">Open</button>' +
+          "</div>" +
+        "</div>"
+      )
+      .join("");
+  } catch {
+    container.innerHTML = '<p class="muted-note">Could not load overdue invoices.</p>';
+  }
+}
+
+// Load an invoice by id (used by the overdue list's "Open" button).
+async function loadInvoiceById(id) {
+  try {
+    const full = await API.getInvoice(id);
+    applyFormState(full);
+    currentSavedId = id;
+    await rebuildSavedSelect();
+    $("savedInvoicesSelect").value = id;
+    await refreshReminderHistory(id);
+    showStatus("Invoice loaded!", "ok");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════
 // RESET
 // ═══════════════════════════════════════════════
 async function resetInvoice() {
@@ -620,6 +772,8 @@ async function resetInvoice() {
   $("savedInvoicesSelect").value = "";
   addLineItem("", 1, 0);
   updatePreview();
+  refreshReminderHistory(null);
+  refreshOverdueList();
   showStatus("Form reset.", "ok");
 }
 
@@ -638,6 +792,10 @@ function escAttr(str) {
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function money(n) {
+  return "$" + Number(n || 0).toFixed(2);
 }
 
 // ═══════════════════════════════════════════════
@@ -669,6 +827,8 @@ async function init() {
   }
   updatePreview();
   markDirty();
+  refreshOverdueList();
+  refreshReminderHistory(null);
 
   // Deep link: ?invoice=<id> loads that invoice (used by the Scheduling Tool's
   // "View Invoice" link).
@@ -681,6 +841,7 @@ async function init() {
       currentSavedId = full.id;
       await rebuildSavedSelect();
       $("savedInvoicesSelect").value = full.id;
+      await refreshReminderHistory(full.id);
       showStatus("Invoice loaded from link!", "ok");
     } catch {
       showStatus("Could not load linked invoice.", "warn");
