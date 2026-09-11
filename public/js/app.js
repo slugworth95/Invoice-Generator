@@ -669,6 +669,23 @@ async function init() {
   }
   updatePreview();
   markDirty();
+
+  // Deep link: ?invoice=<id> loads that invoice (used by the Scheduling Tool's
+  // "View Invoice" link).
+  const params = new URLSearchParams(window.location.search);
+  const invoiceParam = params.get("invoice");
+  if (invoiceParam) {
+    try {
+      const full = await API.getInvoice(invoiceParam);
+      applyFormState(full);
+      currentSavedId = full.id;
+      await rebuildSavedSelect();
+      $("savedInvoicesSelect").value = full.id;
+      showStatus("Invoice loaded from link!", "ok");
+    } catch {
+      showStatus("Could not load linked invoice.", "warn");
+    }
+  }
 }
 
 // ─── Boot ───
