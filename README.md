@@ -130,3 +130,5 @@ Totals are computed server-side from `lineItems`, `taxRate`, and `discountPct`.
 - [x] JSON export/import + CSV export
 - [x] Payment reminders
 - [x] PDF generation (server-side)
+
+> **SUPERSEDED** — This tool has been merged into Slugworth Suite (one app: clients, proposals, invoices, scheduling). This repo is archived for reference. See the pre-merge-2026-09-11 tag for the final standalone state.
