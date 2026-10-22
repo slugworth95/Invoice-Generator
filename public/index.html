@@ -50,7 +50,7 @@
             <input type="text" id="searchSaved" placeholder="Search saved…" oninput="rebuildSavedSelect()">
           </div>
           <select id="savedInvoicesSelect">
-            <option value="">— Saved invoices —</option>
+            <option value="">- Saved invoices -</option>
           </select>
           <button class="btn-save" onclick="saveCurrentInvoice()">💾 Save</button>
           <button class="btn-load" onclick="loadSelectedInvoice()">📂 Load</button>
@@ -115,7 +115,7 @@
           </div>
           <button type="button" class="btn-secondary" onclick="fetchClientsFromTracker()">🔗 Fetch Clients</button>
           <select id="ctClientSelect" style="margin-top:0.5rem;width:100%;" onchange="applyTrackerClient()">
-            <option value="">— Select a client —</option>
+            <option value="">- Select a client -</option>
           </select>
         </div>
         <div class="form-section">
@@ -145,7 +145,7 @@
           <div class="reminder-box">
             <div class="form-group">
               <label>Reminder note (optional)</label>
-              <input type="text" id="reminderNote" placeholder="e.g. Second reminder — please pay by Friday">
+              <input type="text" id="reminderNote" placeholder="e.g. Second reminder, please pay by Friday">
             </div>
             <button type="button" class="btn-email" onclick="sendReminder()">✉️ Send Reminder</button>
             <div id="reminderHistory" class="reminder-history"></div>
@@ -178,13 +178,13 @@
           <div class="preview-meta">
             <div>
               <div class="meta-label">Bill To</div>
-              <div class="meta-value" id="previewClientName">—</div>
+              <div class="meta-value" id="previewClientName">-</div>
               <div class="meta-value muted" id="previewClientCompany"></div>
               <div class="meta-value muted" id="previewClientEmail"></div>
             </div>
             <div class="meta-dates">
-              <div><span class="meta-label">Issue date:</span> <span id="previewIssueDate">—</span></div>
-              <div><span class="meta-label">Due date:</span> <span id="previewDueDate">—</span></div>
+              <div><span class="meta-label">Issue date:</span> <span id="previewIssueDate">-</span></div>
+              <div><span class="meta-label">Due date:</span> <span id="previewDueDate">-</span></div>
             </div>
           </div>
           <table class="preview-table">

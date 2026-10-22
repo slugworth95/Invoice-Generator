@@ -26,7 +26,7 @@ function money(n) {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return "—";
+  if (!dateStr) return "-";
   const d = new Date(dateStr + "T00:00:00");
   if (Number.isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -79,7 +79,7 @@ function buildInvoicePdf(invoice) {
     y += 24;
 
     // ── Bill To (left) + Issue/Due dates (right) ──
-    const billToLines = [invoice.clientName || "—"];
+    const billToLines = [invoice.clientName || "-"];
     if (invoice.clientCompany) billToLines.push(invoice.clientCompany);
     if (invoice.clientEmail) billToLines.push(invoice.clientEmail);
     const billToText = billToLines.join("\n");

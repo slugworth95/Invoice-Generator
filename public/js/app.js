@@ -1,4 +1,4 @@
-// Invoice Generator — UI logic.
+// Invoice Generator: UI logic.
 const $ = (id) => document.getElementById(id);
 
 // ═══════════════════════════════════════════════
@@ -216,7 +216,7 @@ async function rebuildSavedSelect() {
   } catch {
     savedInvoices = [];
   }
-  select.innerHTML = '<option value="">— Saved invoices —</option>';
+  select.innerHTML = '<option value="">- Saved invoices -</option>';
   if (searchVal && savedInvoices.length === 0) {
     const opt = document.createElement("option");
     opt.disabled = true;
@@ -356,7 +356,7 @@ function computeTotals() {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return "—";
+  if (!dateStr) return "-";
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
@@ -367,7 +367,7 @@ function updatePreview() {
   const badge = $("previewStatus");
   badge.textContent = STATUS_LABELS[status] || status;
   badge.className = "status-badge " + (status === "draft" ? "" : status);
-  $("previewClientName").textContent = $("clientName").value || "—";
+  $("previewClientName").textContent = $("clientName").value || "-";
   $("previewClientCompany").textContent = $("clientCompany").value || "";
   $("previewClientEmail").textContent = $("clientEmail").value || "";
   $("previewIssueDate").textContent = formatDate($("issueDate").value);
@@ -500,7 +500,7 @@ async function fetchClientsFromTracker() {
     fetchedClients = await res.json();
     const select = $("ctClientSelect");
     select.innerHTML =
-      '<option value="">— Select a client —</option>' +
+      '<option value="">- Select a client -</option>' +
       fetchedClients
         .map(
           (c) =>
@@ -538,7 +538,7 @@ function printInvoice() {
   const number = $("invoiceNumber").value || "INV-____";
   const previewContent = $("previewPaper").innerHTML;
   const w = window.open("", "_blank");
-  w.document.write("<!DOCTYPE html>\n<html><head><title>Invoice — " + number + "</title>\n" +
+  w.document.write("<!DOCTYPE html>\n<html><head><title>Invoice: " + number + "</title>\n" +
     "<style>\n" +
     "  @page { margin: 0.5in; }\n" +
     "  body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a1a; padding: 0; margin: 0; }\n" +
@@ -583,11 +583,11 @@ function emailInvoice() {
   const total = $("previewTotal").textContent;
   const dueDate = $("previewDueDate").textContent;
   const notes = $("invoiceNotes").value;
-  const subject = encodeURIComponent("Invoice " + number + " — " + total);
+  const subject = encodeURIComponent("Invoice " + number + ", " + total);
   const body = encodeURIComponent(
     "Hi " + clientName + ",\n\n" +
     "Please find invoice " + number + " for " + total + ".\n" +
-    (dueDate !== "—" ? "Due date: " + dueDate + "\n" : "") +
+    (dueDate !== "-" ? "Due date: " + dueDate + "\n" : "") +
     "\n── Details ──\n" + notes + "\n\n" +
     "Thank you for your business!\n"
   );
@@ -710,7 +710,7 @@ async function refreshOverdueList() {
     container.innerHTML = overdue
       .map((inv) =>
         '<div class="overdue-item">' +
-          '<div class="overdue-info"><strong>' + escHtml(inv.number) + "</strong> — " +
+          '<div class="overdue-info"><strong>' + escHtml(inv.number) + "</strong>, " +
             escHtml(inv.clientName || "No client") +
             ' <span class="overdue-days">' + inv.daysOverdue + "d overdue</span></div>" +
           '<div class="overdue-meta">Due ' + formatDate(inv.dueDate) + " · " +

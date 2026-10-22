@@ -1,25 +1,29 @@
 # Invoice-Generator
 
-Create, track, and send invoices. A full-stack app: vanilla JS frontend with live preview, Express API, SQLite database, and token-based auth — with built-in integration with [Client-Tracker](https://github.com/slugworth95/Client-Tracker).
+> **SUPERSEDED**: This tool has been merged into Slugworth Suite (one app: clients, proposals, invoices, scheduling). This repo is kept for reference, not archived. See the pre-merge-2026-09-11 tag for the final standalone state.
+
+![Invoice Generator editor and live preview](screenshots/invoice.png)
+
+Create, track, and send invoices. A full-stack app: vanilla JS frontend with live preview, Express API, SQLite database, and token-based auth, with built-in integration with [Client-Tracker](https://github.com/slugworth95/Client-Tracker).
 
 ## Features
 
-- **Invoice editor** — client info, line items (description, qty, unit price), tax rate, discount, notes
-- **Auto-numbering** — next invoice number suggested automatically (`INV-0001`, `INV-0002`, …)
-- **Status tracking** — draft / sent / paid with color-coded badges
-- **Save & Load** — invoices persist per-user in SQLite; search by number, client, or company
-- **Duplicate** — copy an existing invoice with a fresh number
-- **Live preview** — subtotal, discount, tax, and total computed automatically
-- **Print / Save as PDF** — print-optimized layout
-- **PDF download (server-side)** — real PDF files generated on the server with pdfkit (no browser print dialog)
-- **Payment reminders** — overdue invoice list, one-click reminder emails, and per-invoice reminder history
-- **Email to Client** — pre-filled email via mail client
-- **Export / Import** — JSON export/import (full backup/restore) + CSV export for spreadsheets
-- **Client Tracker integration** — fetch clients and auto-fill the bill-to section
+- **Invoice editor**: client info, line items (description, qty, unit price), tax rate, discount, notes
+- **Auto-numbering**: next invoice number suggested automatically (`INV-0001`, `INV-0002`, …)
+- **Status tracking**: draft / sent / paid with color-coded badges
+- **Save & Load**: invoices persist per-user in SQLite; search by number, client, or company
+- **Duplicate**: copy an existing invoice with a fresh number
+- **Live preview**: subtotal, discount, tax, and total computed automatically
+- **Print / Save as PDF**: print-optimized layout
+- **PDF download (server-side)**: real PDF files generated on the server with pdfkit (no browser print dialog)
+- **Payment reminders**: overdue invoice list, one-click reminder emails, and per-invoice reminder history
+- **Email to Client**: pre-filled email via mail client
+- **Export / Import**: JSON export/import (full backup/restore) + CSV export for spreadsheets
+- **Client Tracker integration**: fetch clients and auto-fill the bill-to section
 
 ## Run locally
 
-Requires Node.js 22.5+ (uses the built-in `node:sqlite` — no native dependencies).
+Requires Node.js 22.5+ (uses the built-in `node:sqlite`, no native dependencies).
 
 ```bash
 npm install
@@ -119,7 +123,7 @@ Totals are computed server-side from `lineItems`, `taxRate`, and `discountPct`.
 1. Run Client Tracker (`npm start` in `Client-Tracker`, port 3000) and create an account.
 2. In Invoice Generator, open the **Client Tracker Integration** section.
 3. Enter `http://localhost:3000` and paste your Client Tracker API token.
-4. Click **Fetch Clients**, then pick a client — the bill-to section auto-fills.
+4. Click **Fetch Clients**, then pick a client; the bill-to section auto-fills.
 
 ## Roadmap
 
@@ -130,5 +134,3 @@ Totals are computed server-side from `lineItems`, `taxRate`, and `discountPct`.
 - [x] JSON export/import + CSV export
 - [x] Payment reminders
 - [x] PDF generation (server-side)
-
-> **SUPERSEDED** � This tool has been merged into Slugworth Suite (one app: clients, proposals, invoices, scheduling). This repo is archived for reference. See the pre-merge-2026-09-11 tag for the final standalone state.

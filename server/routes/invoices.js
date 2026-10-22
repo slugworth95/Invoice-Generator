@@ -74,12 +74,12 @@ function serializeReminder(row) {
   return { id: row.id, invoiceId: row.invoice_id, sentAt: row.sent_at, note: row.note };
 }
 
-// GET /api/invoices/next-number — suggest the next invoice number
+// GET /api/invoices/next-number: suggest the next invoice number
 router.get("/next-number", (req, res) => {
   res.json({ number: nextNumber(req.user.id) });
 });
 
-// GET /api/invoices/overdue — sent invoices past their due date
+// GET /api/invoices/overdue: sent invoices past their due date
 router.get("/overdue", (req, res) => {
   const rows = db
     .prepare(
@@ -92,7 +92,7 @@ router.get("/overdue", (req, res) => {
   res.json(rows.map((row) => ({ ...serializeInvoice(row), daysOverdue: row.days_overdue })));
 });
 
-// POST /api/invoices/pdf — generate a PDF from submitted form state (no save required)
+// POST /api/invoices/pdf: generate a PDF from submitted form state (no save required)
 router.post("/pdf", async (req, res) => {
   const body = req.body || {};
   const lineItems = parseLineItems(body.lineItems);
@@ -122,7 +122,7 @@ router.post("/pdf", async (req, res) => {
   }
 });
 
-// GET /api/invoices?search=&status= — list
+// GET /api/invoices?search=&status=: list
 router.get("/", (req, res) => {
   const { search = "", status } = req.query;
   let sql = "SELECT * FROM invoices WHERE user_id = ?";
@@ -149,7 +149,7 @@ router.get("/:id", (req, res) => {
   res.json(serializeInvoice(row));
 });
 
-// GET /api/invoices/:id/pdf — server-side PDF for a saved invoice
+// GET /api/invoices/:id/pdf: server-side PDF for a saved invoice
 router.get("/:id/pdf", async (req, res) => {
   const row = db
     .prepare("SELECT * FROM invoices WHERE id = ? AND user_id = ?")
@@ -167,7 +167,7 @@ router.get("/:id/pdf", async (req, res) => {
   }
 });
 
-// GET /api/invoices/:id/reminders — reminder history for one invoice
+// GET /api/invoices/:id/reminders: reminder history for one invoice
 router.get("/:id/reminders", (req, res) => {
   const inv = db
     .prepare("SELECT id FROM invoices WHERE id = ? AND user_id = ?")
@@ -179,7 +179,7 @@ router.get("/:id/reminders", (req, res) => {
   res.json(rows.map(serializeReminder));
 });
 
-// POST /api/invoices/:id/reminders — record a payment reminder
+// POST /api/invoices/:id/reminders: record a payment reminder
 router.post("/:id/reminders", (req, res) => {
   const inv = db
     .prepare("SELECT id FROM invoices WHERE id = ? AND user_id = ?")
@@ -194,7 +194,7 @@ router.post("/:id/reminders", (req, res) => {
     .json(serializeReminder(db.prepare("SELECT * FROM reminders WHERE id = ?").get(Number(result.lastInsertRowid))));
 });
 
-// POST /api/invoices — create
+// POST /api/invoices: create
 router.post("/", (req, res) => {
   const body = req.body || {};
   const lineItems = parseLineItems(body.lineItems);
@@ -229,7 +229,7 @@ router.post("/", (req, res) => {
     .json(serializeInvoice(db.prepare("SELECT * FROM invoices WHERE id = ?").get(Number(result.lastInsertRowid))));
 });
 
-// PUT /api/invoices/:id — update
+// PUT /api/invoices/:id: update
 router.put("/:id", (req, res) => {
   const existing = db
     .prepare("SELECT * FROM invoices WHERE id = ? AND user_id = ?")
@@ -277,7 +277,7 @@ router.delete("/:id", (req, res) => {
   res.status(204).end();
 });
 
-// POST /api/invoices/:id/duplicate — copy an invoice with a fresh number
+// POST /api/invoices/:id/duplicate: copy an invoice with a fresh number
 router.post("/:id/duplicate", (req, res) => {
   const existing = db
     .prepare("SELECT * FROM invoices WHERE id = ? AND user_id = ?")

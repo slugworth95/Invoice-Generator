@@ -1,4 +1,4 @@
-// Invoice Generator — Express server.
+// Invoice Generator: Express server.
 // Serves the frontend from /public and exposes the JSON API under /api.
 const path = require("node:path");
 const express = require("express");
@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3002;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-// CORS — allow other local tools to call this API from their own origins.
+// CORS: allow other local tools to call this API from their own origins.
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -64,13 +64,13 @@ app.post("/api/auth/login", (req, res) => {
   res.json(result);
 });
 
-// Logout — clear the shared SSO session cookie
+// Logout: clear the shared SSO session cookie
 app.post("/api/auth/logout", (req, res) => {
   clearTokenCookie(res);
   res.status(204).end();
 });
 
-// Who am I? — validate the current session (from header or shared cookie)
+// Who am I?: validate the current session (from header or shared cookie)
 app.get("/api/auth/me", requireAuth, (req, res) => {
   res.json({ user: req.user });
 });

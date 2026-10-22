@@ -1,4 +1,4 @@
-// Invoice Generator — starter app logic.
+// Invoice Generator: starter app logic.
 // Invoices are stored in localStorage so they survive page reloads.
 
 const STORAGE_KEY = "invoice-generator.invoices";
@@ -44,7 +44,7 @@ function renderInvoices() {
   list.innerHTML = invoices
     .map(
       (inv) =>
-        `<li><strong>${escapeHtml(inv.number)}</strong> — ${escapeHtml(
+        `<li><strong>${escapeHtml(inv.number)}</strong>, ${escapeHtml(
           inv.client
         )} ($${inv.total.toFixed(2)})</li>`
     )
